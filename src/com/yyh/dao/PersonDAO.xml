@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace:映射文件的命名空间,规范是映射文件的全路径-->
+<!--作用:是一个路径,用来查找下面的id-->
+<mapper namespace="com.yyh.dao.PersonDao">
+    <resultMap id="BaseResultMap" type="com.yyh.bean.Person">
+        <!--下面的标签要映射到实体类-->
+        <!--id只有一个-->
+        <!--column是数据库中的列名 很多是下划线-->
+        <!--property是实体类中的属性 一般是驼峰-->
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="birthday" property="birthday"/>
+        <result column="address" property="address"/>
+        <result column="score" property="score"/>
+    </resultMap>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+    select * from person
+</select>
+</mapper>

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="spring-session-data-redis-1.0.1.RELEASE">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/lib/spring-session-data-redis-1.0.1.RELEASE.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
