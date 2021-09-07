@@ -16,7 +16,84 @@
         <result column="score" property="score"/>
     </resultMap>
 
+    <sql id="allColumn">
+        id,name,gender,birthday,address
+    </sql>
+
+    <!--隐藏生日的sql-->
+    <sql id="birthdayColumn">
+        id,name,gender,address
+    </sql>
+
+    <!--全查-->
     <select id="selectAll" resultMap="BaseResultMap">
     select * from person
 </select>
+
+    <!--sql语句中携带参数,其实就是指的where语句 parameterType parameter:参数的type类型(int ,strng,map,set,list)-->
+    <!--select * from person where gender = 2-->
+    <select id="selectPersonBySex" resultMap="BaseResultMap" parameterType="int" >
+        select <include refid="birthdayColumn"/> from person where gender = #{sex}
+    </select>
+
+    <!--查询总条数 select count(*) from person-->
+    <select id="selectCount" resultType="long">
+        select count(*) from person
+    </select>
+
+    <!--查询女生总条数  select count(*) from person where gender = 2 and score > 100-->
+    <!--当前端传来多个参数的时候,需要看这些参数是否是同一个类中的属性(这个是单表),
+    如果是,那么直接可以用这个类做参数,如果不是一个类中(这个是多表!!!),
+    那么需要手写一个参数的实体类(DTO),或者使用Map做参数-->
+    <select id="selectCountByParam01" resultType="long" parameterType="com.yyh.bean.Person">
+        select count(*) from person where gender =#{gender} and score > #{score}
+    </select>
+
+    <!--查询性别是女,且生日大于2020-09-07-->
+    <!--select * from person gender=#{gender} and birthday>=#{birthday}-->
+    <select id="selectCountByParam02" resultMap="BaseResultMap" parameterType="map">
+        <![CDATA[select * from person where gender=#{gender} and birthday < #{birthday}]]>
+    </select>
+
+    <!--查询分值最高的-->
+    <select id="selectCountByZi" resultMap="BaseResultMap">
+        select * from person where score = (select max(score) from  person)
+    </select>
+
+    <!--分组查询-->
+    <!--男女生平均值-->
+    <select id="selectAvgScore" resultType="com.yyh.bean.PersonDto">
+        select gender,avg(score) as avgscore from person group by gender
+    </select>
+
+    <!--男女生平均值大于200的???-->
+    <select id="selectAvgScoreParam" resultType="com.yyh.bean.PersonDto" parameterType="int">
+            select gender,avg(score) as avgscore from person group by gender having avg(score) > #{score}
+    </select>
+
+    <!--用map可以接收任何数据,常见于多表-->
+    <select id="selectAvgScoreParam02" resultType="map" parameterType="int">
+            select gender,avg(score) as avgscore from person group by gender having avg(score) > #{score}
+    </select>
+
+    <!-- 查询孙姓 第一种方式:使用$拼接,因为是拼接的,sql编译的时候没有问号,容易被黑客注入-->
+    <select id="selectPersonByLike" resultMap="BaseResultMap" parameterType="string">
+            select * from person where name like '${name}%'
+    </select>
+
+    <!--查询孙姓 第二种方式:使用sql语句concat的连接,是可以编译的,可以使用-->
+    <select id="selectPersonByLike02" resultMap="BaseResultMap" parameterType="string">
+        select * from person where name like concat ('%',#{name},'%')
+    </select>
+
+    <!--查询孙姓 第三种方式:是可以编译的,可以使用-->
+    <select id="selectPersonByLike03" resultMap="BaseResultMap" parameterType="string">
+        select * from person where name like "%"#{name}"%"
+    </select>
+
+    <!--增加一条数据,insert into person (id,name,gender,birthday,address,score) values(null,#{name}...)-->
+    <insert id="insertPerson" parameterType="com.yyh.bean.Person">
+        insert into person (id,name,gender,birthday,address,score)
+        values(null,#{name},#{gender},#{birthday},#{address},#{score})
+    </insert>
 </mapper>
