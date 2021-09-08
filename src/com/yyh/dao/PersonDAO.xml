@@ -92,8 +92,95 @@
     </select>
 
     <!--增加一条数据,insert into person (id,name,gender,birthday,address,score) values(null,#{name}...)-->
+    <!--插入数据之后,自动上报主键id-->
+    <!--selectKey:一般多表级联插入的时候,需要获取刚刚插入的数据的主键id的时候用到的-->
+    <!--keyProperty:主键的id-->
+    <!--order:自增的主键,是数据插入后诞生的还是插入前诞生的 mysql after oracle 前-->
+    <!--resultType:主键id的类型,一般int,分布式string雪花算法-->
+    <!--select LAST_INSERT_ID():查询最后插入的id-->
     <insert id="insertPerson" parameterType="com.yyh.bean.Person">
+        <selectKey keyProperty="id" order="AFTER" resultType="int">
+            select LAST_INSERT_ID()
+        </selectKey>
         insert into person (id,name,gender,birthday,address,score)
         values(null,#{name},#{gender},#{birthday},#{address},#{score})
     </insert>
+
+    <!--删除一条数据-->
+    <delete id="deletePersonBuId" parameterType="int">
+        delete from person where id = #{id}
+    </delete>
+
+    <!--动态sql之动态查询 意思就是:select + if判断-->
+    <!--if的注意事项:test="gender"是指得实体类中的属性,驼峰的-->
+    <!--动态sql标签有九个
+    <where>:1.删除第一个and 2.代替了原始的sql中的where where常和if搭配
+            where里需要把方法里的参数(map,实体类)属性写全
+    -->
+    <select id="dongTaiSelect" resultMap="BaseResultMap" parameterType="com.yyh.bean.Person">
+          select * from person p
+          <where>
+              <if test="id != null and id != '' ">
+                    p.id=#{id}
+              </if>
+
+              <if test="name != null and name != '' ">
+                  and p.name=#{name}
+              </if>
+
+              <if test="gender != null and gender != '' ">
+                  and  p.gender=#{gender}
+              </if>
+
+              <if test="birthday != null and birthday != '' ">
+                  and  p.birthday=#{birthday}
+              </if>
+
+              <if test="address != null and address != '' ">
+                  and  p.address=#{address}
+              </if>
+
+              <if test="score != null and score != '' ">
+                  and  p.score>#{score}
+              </if>
+          </where>
+    </select>
+
+    <!--动态修改 update person set xx=xx where id=?  -->
+    <update id="dongTaiUpdate" parameterType="com.yyh.bean.Person">
+        update person p
+        <set>
+            <if test="name != null and name != '' ">
+                 p.name=#{name},
+            </if>
+
+            <if test="gender != null and gender != '' ">
+                 p.gender=#{gender},
+            </if>
+
+            <if test="birthday != null  ">
+                p.birthday=#{birthday},
+            </if>
+
+            <if test="address != null and address != '' ">
+                p.address=#{address},
+            </if>
+
+            <if test="score != null and score != '' ">
+                and  p.score>#{score}
+            </if>
+        </set>
+        where p.id=#{id}
+    </update>
+
+    <!--批量删除-->
+    <!--delete from person where id in (1,2,3,4)-->
+    <!--(1,2,3,4)把它当成一个集合 ids-->
+    <delete id="piLiangDel" parameterType="map">
+        delete from person where id in
+        <foreach collection="ids" open="(" item="id" separator="," close=")" index="index" >
+            #{id}
+        </foreach>
+    </delete>
+
 </mapper>

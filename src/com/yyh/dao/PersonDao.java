@@ -49,4 +49,19 @@ public interface PersonDao {
     //增加的方法
     int insertPerson(Person person);
 
+    //删除的方法
+    int deletePersonBuId(Integer id);//注意:之后讲解动态sql,那么我们dao层接口只有一个基础类型,
+    //int,String不好的,不方便执行动态sql,对以后扩展不便
+    //以后自己写代码参数一定是一个实体类或者Map,或者Dto
+
+    //动态sql
+    List<Person> dongTaiSelect(Person person);//动态sql如果参数不是实体类,集合是个空参,那么没有任何意义
+    //长成返回值是list<实体类>参数也是同样的实体类,那么这是典型的动态sql语句
+
+    //动态修改
+    int dongTaiUpdate();
+
+    //批量删除
+    void piLiangDel(Map map);
+
 }

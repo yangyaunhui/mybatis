@@ -10,13 +10,11 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MybatisTest {
     private SqlSession sqlSession;//讲一下mybatis的执行流程
+
     @Before//在@Test注解前,执行的方法,提取重复的代码
     public void before() throws Exception {
         //加载并读取xml
@@ -31,8 +29,8 @@ public class MybatisTest {
 
     //全查
     @Test
-    public void test01(){
-       List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectAll");
+    public void test01() {
+        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectAll");
         for (Person person : personList) {
             System.out.println("person = " + person);
         }
@@ -41,8 +39,8 @@ public class MybatisTest {
 
     //单查
     @Test
-    public void test02(){
-        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonBySex",2);
+    public void test02() {
+        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonBySex", 2);
         for (Person person : personList) {
             System.out.println("person = " + person);
         }
@@ -63,7 +61,7 @@ public class MybatisTest {
         Person person = new Person();
         person.setScore(100);
         person.setGender(2);
-        long o = sqlSession.selectOne("com.yyh.dao.PersonDao.selectCountByParam01",person);
+        long o = sqlSession.selectOne("com.yyh.dao.PersonDao.selectCountByParam01", person);
         System.out.println("o = " + o);
         sqlSession.close();
     }
@@ -71,12 +69,12 @@ public class MybatisTest {
     //带参查询 第二种方式:map传参---多见于多表查询
     @Test
     public void test05() throws ParseException {
-        String date="2020-10-14";
+        String date = "2020-10-14";
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
         Date birthday = sf.parse(date);
         Map map = new HashMap();
-        map.put("gender",2);//key一定要和#{gender}一致
-        map.put("birthday",birthday);//key一定要和#{birthday}一致
+        map.put("gender", 2);//key一定要和#{gender}一致
+        map.put("birthday", birthday);//key一定要和#{birthday}一致
         List<Person> lists = sqlSession.selectList("com.yyh.dao.PersonDao.selectCountByParam02", map);
         for (Person list : lists) {
             System.out.println("list = " + list);
@@ -86,7 +84,7 @@ public class MybatisTest {
 
     //子查询
     @Test
-    public void test06(){
+    public void test06() {
         List<Person> lists = sqlSession.selectList("com.yyh.dao.PersonDao.selectCountByZi");
         for (Person list : lists) {
             System.out.println("list = " + list);
@@ -96,7 +94,7 @@ public class MybatisTest {
 
     //分组查询
     @Test
-    public void test07(){
+    public void test07() {
         List<PersonDto> personDtos = sqlSession.selectList("com.yyh.dao.PersonDao.selectAvgScore");
         for (PersonDto personDto : personDtos) {
             System.out.println("personDto = " + personDto);
@@ -106,8 +104,8 @@ public class MybatisTest {
 
     //分组查询+参数
     @Test
-    public void test08(){
-        List<PersonDto> personDtos = sqlSession.selectList("com.yyh.dao.PersonDao.selectAvgScoreParam",200);
+    public void test08() {
+        List<PersonDto> personDtos = sqlSession.selectList("com.yyh.dao.PersonDao.selectAvgScoreParam", 200);
         for (PersonDto personDto : personDtos) {
             System.out.println("personDto = " + personDto);
         }
@@ -116,7 +114,7 @@ public class MybatisTest {
 
     //分组查询+map
     @Test
-    public void test09(){
+    public void test09() {
         List<Map> maps = sqlSession.selectList("com.yyh.dao.PersonDao.selectAvgScoreParam02", 200);
         for (Map map : maps) {
             System.out.println("map = " + map);
@@ -126,10 +124,10 @@ public class MybatisTest {
 
     //查询孙姓 不要用拼接的方式写$
     @Test
-    public void test10(){
+    public void test10() {
         Map map = new HashMap();
-        map.put("name","孙");
-        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonByLike",map);
+        map.put("name", "孙");
+        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonByLike", map);
 
         //There is no getter for property named 'name'
         //因为$是拼接的,没有getter这个概念 #相当于问号,有getter概念
@@ -142,7 +140,7 @@ public class MybatisTest {
 
     //查询孙姓 可以用这个
     @Test
-    public void test11(){
+    public void test11() {
         List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonByLike02", "孙");
         for (Person person : personList) {
             System.out.println("person = " + person);
@@ -152,7 +150,7 @@ public class MybatisTest {
 
     //查询孙姓 可以用这个
     @Test
-    public void test12(){
+    public void test12() {
         List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.selectPersonByLike03", "孙");
         for (Person person : personList) {
             System.out.println("person = " + person);
@@ -165,15 +163,88 @@ public class MybatisTest {
     @Test
     public void test13() {
         Person person = new Person();
-            person.setName("木易");
-            person.setGender(2);
-            person.setBirthday(new Date());
-            person.setAddress("杭州");
-            person.setScore(666);
+        person.setName("木易");
+        person.setGender(2);
+        person.setBirthday(new Date());
+        person.setAddress("杭州");
+        person.setScore(666);
         int insert = sqlSession.insert("com.yyh.dao.PersonDao.insertPerson", person);
         System.out.println("insert = " + insert);
         sqlSession.commit();
         sqlSession.close();
     }
 
+    //删除
+    @Test
+    public void test14() {
+        int i = sqlSession.delete("com.yyh.dao.PersonDao.deletePersonBuId", 17);
+        System.out.println("i = " + i);
+        sqlSession.commit();
+        sqlSession.close();
+    }
+
+    //动态sql 重点,难点
+    //动态sql就是让达到1条xml中的语句可以实现N种查询
+    //那么要实现多种查询 就有一个硬性的条件!!!参数要多---1.放弃单个的属性(int String) 改用实体类 2.参数改用map
+    //今天所学的推翻昨天所学的 那么就需要总结昨天所学的
+    //第一类:特征1:返回值---正常表的结果集 对应的是person实体类
+    //特征2:都是 select * from person开头的
+    //1.1 select * from person  if如果 where后面没参数那么就是全查
+    //1.2 select * from person where gender = 2 if如果 where后面参数是gender,那么就是单查gender
+    //1.3 select * from person gender=#{gender} and birthday>=#{birthday}
+    //1.4 select * from person where name like "%"#{name}"%"
+    //1-4可以合N为1,只需要把where后面的参数做个if判断
+
+    //第二类:特征1:返回值---一个数,单行单列,非person实体类,是一个数据类型
+    //特征2:都是 select count(*) from person 开头的
+    //2.1 select count(*) from person
+    //2.2 select count(*) from person where gender = 2 and score > 100
+
+    //综上所述,以上的sql可以进行动态判断,形成一个sql!!!这就叫动态sql...
+
+
+    //动态查询
+    @Test
+    public void test15() {
+        Person person = new Person();
+        //null就是全查
+        //person.setId(16); //select * from person p WHERE p.id=?
+        person.setScore(200);
+        person.setGender(2);
+        List<Person> personList = sqlSession.selectList("com.yyh.dao.PersonDao.dongTaiSelect", person);
+        for (Person person1 : personList) {
+            System.out.println("person1 = " + person1);
+        }
+        sqlSession.commit();
+        sqlSession.close();
+    }
+
+    //动态修改 有选择性修改多个字段,可以修改女生分数,日期...
+    @Test
+    public void test16() {
+        Person person = new Person();
+        person.setId(16);
+        person.setAddress("杭州");
+        person.setBirthday(new Date());
+        int update = sqlSession.update("com.yyh.dao.PersonDao.dongTaiUpdate", person);
+        System.out.println("update = " + update);
+        sqlSession.commit();
+        sqlSession.close();
+    }
+
+    //批量删除 delete xxx in (1,2,3,4)
+    //构造ids
+    @Test
+    public void test17() {
+        List<Integer> idList = new ArrayList<>();
+        idList.add(1);
+        idList.add(2);
+        idList.add(3);
+        Map map = new HashMap();
+        map.put("ids", idList);
+        int delete = sqlSession.delete("com.yyh.dao.PersonDao.piLiangDel", map);
+        System.out.println("delete = " + delete);
+        sqlSession.commit();
+        sqlSession.close();
+    }
 }
