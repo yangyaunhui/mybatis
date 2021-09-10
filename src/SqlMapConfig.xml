@@ -18,5 +18,6 @@
 
 	<mappers>
 		<mapper resource="com/yyh/dao/PersonDAO.xml"/>
+		<mapper resource="com/yyh/dao/HumanDAO.xml"/>
 	</mappers>
 </configuration>
