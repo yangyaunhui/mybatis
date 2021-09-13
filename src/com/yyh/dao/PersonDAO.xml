@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace:映射文件的命名空间,规范是映射文件的全路径-->
+<!--作用:是一个路径,用来查找下面的id-->
+<mapper namespace="com.yyh.dao.PersonDao">
+    <resultMap id="BaseResultMap" type="com.yyh.bean.Person">
+        <!--下面的标签要映射到实体类-->
+        <!--id只有一个-->
+        <!--column是数据库中的列名 很多是下划线-->
+        <!--property是实体类中的属性 一般是驼峰-->
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="birthday" property="birthday"/>
+        <result column="address" property="address"/>
+        <result column="score" property="score"/>
+    </resultMap>
+
+    <sql id="allColumn">
+        id,name,gender,birthday,address
+    </sql>
+
+    <!--隐藏生日的sql-->
+    <sql id="birthdayColumn">
+        id,name,gender,address
+    </sql>
+
+    <!--全查-->
+    <select id="selectAll" resultMap="BaseResultMap">
+    select * from person
+</select>
+
+    <!--sql语句中携带参数,其实就是指的where语句 parameterType parameter:参数的type类型(int ,strng,map,set,list)-->
+    <!--select * from person where gender = 2-->
+    <select id="selectPersonBySex" resultMap="BaseResultMap" parameterType="int" >
+        select <include refid="birthdayColumn"/> from person where gender = #{sex}
+    </select>
+
+    <!--查询总条数 select count(*) from person-->
+    <select id="selectCount" resultType="long">
+        select count(*) from person
+    </select>
+
+    <!--查询女生总条数  select count(*) from person where gender = 2 and score > 100-->
+    <!--当前端传来多个参数的时候,需要看这些参数是否是同一个类中的属性(这个是单表),
+    如果是,那么直接可以用这个类做参数,如果不是一个类中(这个是多表!!!),
+    那么需要手写一个参数的实体类(DTO),或者使用Map做参数-->
+    <select id="selectCountByParam01" resultType="long" parameterType="com.yyh.bean.Person">
+        select count(*) from person where gender =#{gender} and score > #{score}
+    </select>
+
+    <!--查询性别是女,且生日大于2020-09-07-->
+    <!--select * from person gender=#{gender} and birthday>=#{birthday}-->
+    <select id="selectCountByParam02" resultMap="BaseResultMap" parameterType="map">
+        <![CDATA[select * from person where gender=#{gender} and birthday < #{birthday}]]>
+    </select>
+
+    <!--查询分值最高的-->
+    <select id="selectCountByZi" resultMap="BaseResultMap">
+        select * from person where score = (select max(score) from  person)
+    </select>
+
+    <!--分组查询-->
+    <!--男女生平均值-->
+    <select id="selectAvgScore" resultType="com.yyh.bean.PersonDto">
+        select gender,avg(score) as avgscore from person group by gender
+    </select>
+
+    <!--男女生平均值大于200的???-->
+    <select id="selectAvgScoreParam" resultType="com.yyh.bean.PersonDto" parameterType="int">
+            select gender,avg(score) as avgscore from person group by gender having avg(score) > #{score}
+    </select>
+
+    <!--用map可以接收任何数据,常见于多表-->
+    <select id="selectAvgScoreParam02" resultType="map" parameterType="int">
+            select gender,avg(score) as avgscore from person group by gender having avg(score) > #{score}
+    </select>
+
+    <!-- 查询孙姓 第一种方式:使用$拼接,因为是拼接的,sql编译的时候没有问号,容易被黑客注入-->
+    <select id="selectPersonByLike" resultMap="BaseResultMap" parameterType="string">
+            select * from person where name like '${name}%'
+    </select>
+
+    <!--查询孙姓 第二种方式:使用sql语句concat的连接,是可以编译的,可以使用-->
+    <select id="selectPersonByLike02" resultMap="BaseResultMap" parameterType="string">
+        select * from person where name like concat ('%',#{name},'%')
+    </select>
+
+    <!--查询孙姓 第三种方式:是可以编译的,可以使用-->
+    <select id="selectPersonByLike03" resultMap="BaseResultMap" parameterType="string">
+        select * from person where name like "%"#{name}"%"
+    </select>
+
+    <!--增加一条数据,insert into person (id,name,gender,birthday,address,score) values(null,#{name}...)-->
+    <!--插入数据之后,自动上报主键id-->
+    <!--selectKey:一般多表级联插入的时候,需要获取刚刚插入的数据的主键id的时候用到的-->
+    <!--keyProperty:主键的id-->
+    <!--order:自增的主键,是数据插入后诞生的还是插入前诞生的 mysql after oracle 前-->
+    <!--resultType:主键id的类型,一般int,分布式string雪花算法-->
+    <!--select LAST_INSERT_ID():查询最后插入的id-->
+    <insert id="insertPerson" parameterType="com.yyh.bean.Person">
+        <selectKey keyProperty="id" order="AFTER" resultType="int">
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert into person (id,name,gender,birthday,address,score)
+        values(null,#{name},#{gender},#{birthday},#{address},#{score})
+    </insert>
+
+    <!--删除一条数据-->
+    <delete id="deletePersonBuId" parameterType="int">
+        delete from person where id = #{id}
+    </delete>
+
+    <!--动态sql之动态查询 意思就是:select + if判断-->
+    <!--if的注意事项:test="gender"是指得实体类中的属性,驼峰的-->
+    <!--动态sql标签有九个
+    <where>:1.删除第一个and 2.代替了原始的sql中的where where常和if搭配
+            where里需要把方法里的参数(map,实体类)属性写全
+    -->
+    <select id="dongTaiSelect" resultMap="BaseResultMap" parameterType="com.yyh.bean.Person">
+          select * from person p
+          <where>
+              <if test="id != null and id != '' ">
+                    p.id=#{id}
+              </if>
+
+              <if test="name != null and name != '' ">
+                  and p.name=#{name}
+              </if>
+
+              <if test="gender != null and gender != '' ">
+                  and  p.gender=#{gender}
+              </if>
+
+              <if test="birthday != null and birthday != '' ">
+                  and  p.birthday=#{birthday}
+              </if>
+
+              <if test="address != null and address != '' ">
+                  and  p.address=#{address}
+              </if>
+
+              <if test="score != null and score != '' ">
+                  and  p.score>#{score}
+              </if>
+          </where>
+    </select>
+
+    <!--动态修改 update person set xx=xx where id=?  -->
+    <update id="dongTaiUpdate" parameterType="com.yyh.bean.Person">
+        update person p
+        <set>
+            <if test="name != null and name != '' ">
+                 p.name=#{name},
+            </if>
+
+            <if test="gender != null and gender != '' ">
+                 p.gender=#{gender},
+            </if>
+
+            <if test="birthday != null  ">
+                p.birthday=#{birthday},
+            </if>
+
+            <if test="address != null and address != '' ">
+                p.address=#{address},
+            </if>
+
+            <if test="score != null and score != '' ">
+                and  p.score>#{score}
+            </if>
+        </set>
+        where p.id=#{id}
+    </update>
+
+    <!--批量删除-->
+    <!--delete from person where id in (1,2,3,4)-->
+    <!--(1,2,3,4)把它当成一个集合 ids-->
+    <delete id="piLiangDel" parameterType="map">
+        delete from person where id in
+        <foreach collection="ids" open="(" item="id" separator="," close=")" index="index" >
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <!--多表的关系需要程序员自定义一个resultMap标签-->
+    <resultMap id="selectOrdesByPersonIdRM" type="com.yyh.bean.Person" extends="BaseResultMap">
+        <!--<id column="id" property="id"/>-->
+        <!--<result column="name" property="name"/>-->
+        <!--<result column="gender" property="gender"/>-->
+        <!--<result column="birthday" property="birthday"/>-->
+        <!--<result column="address" property="address"/>-->
+        <!--<result column="score" property="score"/>-->
+            <collection property="ordersList" ofType="com.yyh.bean.Orders">
+                <id column="orders_id" jdbcType="INTEGER" property="ordersId" />
+                <result column="person_id" jdbcType="INTEGER" property="personId" />
+                <result column="total_price" jdbcType="DOUBLE" property="totalPrice" />
+                <result column="addr" jdbcType="VARCHAR" property="addr" />
+            </collection>
+    </resultMap>
+
+    <!--1 vs 多 查询-->
+    <select id="selectOrdesByPersonId" resultMap="selectOrdesByPersonIdRM" parameterType="int">
+      select * from person p
+      join orders o
+      on p.id = o.person_id
+      where p.id=#{id}
+    </select>
+
+    <resultMap id="selectDetailByPersonIdRM" type="com.yyh.bean.Person" extends="BaseResultMap">
+        <collection property="ordersList" ofType="com.yyh.bean.Orders">
+        <id column="orders_id" jdbcType="INTEGER" property="ordersId" />
+        <result column="person_id" jdbcType="INTEGER" property="personId" />
+        <result column="total_price" jdbcType="DOUBLE" property="totalPrice" />
+        <result column="addr" jdbcType="VARCHAR" property="addr" />
+
+            <collection property="orderDetails" ofType="com.yyh.bean.OrderDetail">
+                <id column="detail_id" jdbcType="INTEGER" property="detailId" />
+                <result column="order_id" jdbcType="INTEGER" property="orderId" />
+                <result column="item_name" jdbcType="VARCHAR" property="itemName" />
+                <result column="price" jdbcType="DOUBLE" property="price" />
+                <result column="count" jdbcType="INTEGER" property="count" />
+            </collection>
+        </collection>
+    </resultMap>
+
+
+    <!--1 vs 多 vs 多 查询-->
+    <select id="selectDetailByPersonId" resultMap="selectDetailByPersonIdRM" parameterType="int">
+            select * from person p
+                  join orders o on o.person_id =  p.id
+                  join order_detail od on od.order_id = o.orders_id
+                  where p.id = #{id}
+
+    </select>
+
+    <!--三表连查 随意传参数,随意返回值,和实体类中集合无关系-->
+    <select id="selectDetailByParam" resultType="map" parameterType="map">
+        select * from person p
+                  join orders o on o.person_id =  p.id
+                  join order_detail od on od.order_id = o.orders_id
+                  <where>
+                      <if test="id != null">
+                          p.id=#{id}
+                      </if>
+                      <if test="name != null">
+                         and p.name=#{name}
+                      </if>
+                  </where>
+    </select>
+
+    <!--多对多的查询,根据人查到的角色-->
+
+    <resultMap id="selectRoleByPnameRM" type="com.yyh.bean.Person" extends="BaseResultMap">
+        <collection property="roleList" ofType="com.yyh.bean.Role">
+            <id column="role_id" jdbcType="INTEGER" property="roleId" />
+            <result column="role_name" jdbcType="VARCHAR" property="roleName" />
+            <result column="desc" jdbcType="VARCHAR" property="desc" />
+        </collection>
+    </resultMap>
+    <select id="selectRoleByPname" resultMap="selectRoleByPnameRM" parameterType="string">
+        select * from person p join person_role prr
+            on prr.personid=p.id join role r
+            on r.role_id = prr.roleid where p.name=#{name}
+    </select>
+
+</mapper>
